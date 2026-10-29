@@ -1,0 +1,61 @@
+platform :ios, '14.0'
+
+# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  # 1) Use configured FLUTTER_ROOT if valid
+  configured = ENV['FLUTTER_ROOT']
+  if configured && !configured.to_s.strip.empty?
+    podhelper = File.join(configured, 'packages', 'flutter_tools', 'bin', 'podhelper.rb')
+    return configured if File.file?(podhelper)
+  end
+
+  # 2) Parse ios/Flutter/Generated.xcconfig if present
+  generated_xcconfig = File.expand_path(File.join(__dir__, '..', 'Flutter', 'Generated.xcconfig'))
+  if File.exist?(generated_xcconfig)
+    File.foreach(generated_xcconfig) do |line|
+      if line =~ /FLUTTER_ROOT\s*=\s*(.*)/
+        candidate = $1.strip
+        podhelper = File.join(candidate, 'packages', 'flutter_tools', 'bin', 'podhelper.rb')
+        return candidate if File.file?(podhelper)
+      end
+    end
+  end
+
+  # 3) Try locating flutter on PATH (which flutter) and infer SDK root
+  begin
+    flutter_bin = `which flutter`.strip
+    unless flutter_bin.nil? || flutter_bin.empty?
+      # `which flutter` may return path/to/flutter; SDK root is usually two levels up
+      candidate = File.expand_path(File.join(flutter_bin, '..', '..'))
+      podhelper = File.join(candidate, 'packages', 'flutter_tools', 'bin', 'podhelper.rb')
+      return candidate if File.file?(podhelper)
+    end
+  rescue
+    # ignore errors from backticks
+  end
+
+  raise 'FLUTTER_ROOT could not be determined. Set FLUTTER_ROOT or ensure Generated.xcconfig contains FLUTTER_ROOT, or that flutter is on PATH.'
+end
+
+require File.expand_path(File.join(flutter_root, 'packages', 'flutter_tools', 'bin', 'podhelper'), __FILE__)
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+  end
+end
